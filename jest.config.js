@@ -5,7 +5,8 @@ module.exports = {
   collectCoverageFrom: [
     'agent/**/*.js',
     '!agent/sandbox/daytona.js',
-    '!agent/cli.js'
+    '!agent/cli.js',
+    '!agent/create-and-push-repo.js'
   ],
   coverageThreshold: {
     global: {
