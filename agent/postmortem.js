@@ -13,13 +13,13 @@ function generatePostmortem(sessionId) {
   const session = timeline.session;
   const events = timeline.events;
 
-  const triageEvent = events.find(e => e.stage === 'triage_complete');
+  const triageEvent = events.find(e => e.stage === 'triage_complete' || e.stage === 'triage complete');
   const triagePayload = triageEvent ? triageEvent.payload : {};
 
-  const patchEvent = events.find(e => e.stage === 'patch_proposed');
+  const patchEvent = events.find(e => e.stage === 'patch_proposed' || e.stage === 'patch proposed');
   const patchPayload = patchEvent ? patchEvent.payload : {};
 
-  const prEvent = events.find(e => e.stage === 'PR_opened');
+  const prEvent = events.find(e => e.stage === 'PR_opened' || e.stage === 'PR opened' || e.stage === 'pr_opened');
   const prPayload = prEvent ? prEvent.payload : {};
 
   const status = session.status;
