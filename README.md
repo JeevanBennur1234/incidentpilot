@@ -33,10 +33,17 @@ Checklist mapping incident response requirements to the exact files:
   * Implementation: [`agent/connectors/logs-metrics-mcp.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/connectors/logs-metrics-mcp.js) (Docker logs & metrics collector) and [`agent/connectors/github-mcp.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/connectors/github-mcp.js) (GitHub Octokit PR integration).
 - [x] **Sandboxing**: Ephemeral Docker-based sandboxes managed via Daytona CLI/SDK simulation fallback.
   * Implementation: [`agent/sandbox/daytona.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/sandbox/daytona.js)
-  * *Sandboxing Run Mode*: This orchestrator supports a **three-tier fallback sandbox**:
-    1. *Tier 1*: Live Daytona Remote Sandbox (requires `DAYTONA_SERVER_URL` and `DAYTONA_API_KEY`).
-    2. *Tier 2*: Local Docker Sandbox fallback (spawns container stack via docker-compose locally).
-    3. *Tier 3*: Simulated Sandbox fallback (last-resort mode used in this demo run as Docker service `com.docker.service` was stopped on the host and WSL integration was inactive).
+  * *Sandboxing Run Mode*: **Tier 3: Simulated Sandbox fallback** was the mode actually exercised during the runs.
+  * *System Connectivity Evidence*:
+    * Daytona CLI: `daytona : The term 'daytona' is not recognized as the name of a cmdlet` (Uninstalled)
+    * Docker Engine Daemon: `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine... The system cannot find the file specified.` (Stopped)
+  * *Activating Real Isolation (Tiers 1 & 2)*:
+    * To activate **Tier 1 (Real Daytona Sandboxing)**: Deploy/install the Daytona CLI and export active server/auth variables:
+      ```env
+      DAYTONA_SERVER_URL=https://your-daytona-server
+      DAYTONA_API_KEY=your_daytona_api_key
+      ```
+    * To activate **Tier 2 (Real Docker Compose Sandboxing)**: The local Docker Desktop Service (`com.docker.service`) must be started on the host machine using administrator privileges, enabling the Windows named pipe socket mapping.
 - [x] **Skills**: Runbooks, safety rules, and service context definitions stored in markdown format.
   * Implementation: [`agent/skills/loader.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/skills/loader.js) (frontmatter markdown parser) and [`agent/skills/*.md`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/skills/) files.
 - [x] **Subagents**: Autonomous task-specific agents equipped with restricted read-only or write-only tools.
