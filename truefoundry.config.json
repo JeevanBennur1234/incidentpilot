@@ -1,0 +1,17 @@
+{
+  "name": "incidentpilot",
+  "mcpServers": {
+    "logs-metrics-mcp": {
+      "command": "node",
+      "args": [
+        "agent/connectors/logs-metrics-mcp.js"
+      ]
+    },
+    "github-mcp": {
+      "command": "node",
+      "args": [
+        "agent/connectors/github-mcp.js"
+      ]
+    }
+  }
+}

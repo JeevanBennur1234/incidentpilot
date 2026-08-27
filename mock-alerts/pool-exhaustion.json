@@ -1,0 +1,22 @@
+{
+  "id": "alert-pool-exhaustion-9876",
+  "incident_key": "order-service-db-pool-exhaustion",
+  "title": "CRITICAL: Database Connection Pool Exhausted on order-service",
+  "status": "triggered",
+  "severity": "CRITICAL",
+  "service": "order-service",
+  "timestamp": "2026-08-27T18:00:00Z",
+  "event_source": "Datadog",
+  "payload": {
+    "metric_name": "db.pool.waiting_connections",
+    "threshold": 0,
+    "actual_value": 1,
+    "message": "The connection pool for order-service database is exhausted. Client requests are queueing and timing out.",
+    "host": "order-service-prod-0",
+    "tags": [
+      "env:production",
+      "service:order-service",
+      "team:platform-engineering"
+    ]
+  }
+}

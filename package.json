@@ -1,0 +1,24 @@
+{
+  "name": "incidentpilot",
+  "version": "1.0.0",
+  "description": "An agentic incident response orchestrator",
+  "main": "agent/orchestrator.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:coverage": "jest --coverage"
+  },
+  "dependencies": {
+    "@daytonaio/sdk": "^0.207.0",
+    "@octokit/rest": "^22.0.1",
+    "@truefoundry/trueforge": "^0.1.4",
+    "better-sqlite3": "^13.0.3"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
+}

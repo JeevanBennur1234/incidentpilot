@@ -1,0 +1,21 @@
+{
+  "events": [
+    {
+      "timestamp": "2026-08-27T18:30:26.782Z",
+      "event": "incident_rejected_by_human"
+    },
+    {
+      "timestamp": "2026-08-27T18:30:42.804Z",
+      "event": "incident_triggered"
+    },
+    {
+      "timestamp": "2026-08-27T18:30:48.284Z",
+      "event": "incident_approved_by_human"
+    },
+    {
+      "timestamp": "2026-08-27T18:30:50.050Z",
+      "event": "incident_resolved"
+    }
+  ],
+  "sessionId": "session-test-uuid-12345"
+}
