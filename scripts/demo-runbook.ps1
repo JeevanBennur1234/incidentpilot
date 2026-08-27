@@ -24,7 +24,7 @@ Write-Output "=========================================================="
 Write-Output "LAUNCHING INCIDENTPILOT AUTOMATED DIAGNOSTICS & TRIAGE"
 Write-Output "=========================================================="
 Write-Output "[DEMO] Running orchestrator with pool-exhaustion alert payload..."
-Write-Output "[DEMO] THIS IS THE HUMAN-IN-THE-LOOP GATE — approving now when prompted."
+Write-Output "[DEMO] THIS IS THE HUMAN-IN-THE-LOOP GATE - approving now when prompted."
 Write-Output "=========================================================="
 
 node agent/cli.js --alert mock-alerts/pool-exhaustion.json

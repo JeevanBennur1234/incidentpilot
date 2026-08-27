@@ -28,7 +28,7 @@ echo "=========================================================="
 echo "LAUNCHING INCIDENTPILOT AUTOMATED DIAGNOSTICS & TRIAGE"
 echo "=========================================================="
 echo "[DEMO] Running orchestrator with pool-exhaustion alert payload..."
-echo "[DEMO] THIS IS THE HUMAN-IN-THE-LOOP GATE — approving now when prompted."
+echo "[DEMO] THIS IS THE HUMAN-IN-THE-LOOP GATE - approving now when prompted."
 echo "=========================================================="
 
 node agent/cli.js --alert mock-alerts/pool-exhaustion.json
