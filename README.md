@@ -32,7 +32,11 @@ Checklist mapping incident response requirements to the exact files:
 - [x] **MCP Connectors**: Standard-compliant Model Context Protocol server connectors exposing tools.
   * Implementation: [`agent/connectors/logs-metrics-mcp.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/connectors/logs-metrics-mcp.js) (Docker logs & metrics collector) and [`agent/connectors/github-mcp.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/connectors/github-mcp.js) (GitHub Octokit PR integration).
 - [x] **Sandboxing**: Ephemeral Docker-based sandboxes managed via Daytona CLI/SDK simulation fallback.
-  * Implementation: [`agent/sandbox/daytona.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/sandbox/daytona.js) (Daytona SDK + throwaway docker-compose sandbox wrapper).
+  * Implementation: [`agent/sandbox/daytona.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/sandbox/daytona.js)
+  * *Sandboxing Run Mode*: This orchestrator supports a **three-tier fallback sandbox**:
+    1. *Tier 1*: Live Daytona Remote Sandbox (requires `DAYTONA_SERVER_URL` and `DAYTONA_API_KEY`).
+    2. *Tier 2*: Local Docker Sandbox fallback (spawns container stack via docker-compose locally).
+    3. *Tier 3*: Simulated Sandbox fallback (last-resort mode used in this demo run as Docker service `com.docker.service` was stopped on the host and WSL integration was inactive).
 - [x] **Skills**: Runbooks, safety rules, and service context definitions stored in markdown format.
   * Implementation: [`agent/skills/loader.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/skills/loader.js) (frontmatter markdown parser) and [`agent/skills/*.md`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/skills/) files.
 - [x] **Subagents**: Autonomous task-specific agents equipped with restricted read-only or write-only tools.

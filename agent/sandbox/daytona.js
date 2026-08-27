@@ -2,6 +2,23 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+/**
+ * IncidentPilot Three-Tier Sandbox Architecture:
+ * 
+ * 1. Tier 1 (Daytona Cloud/CLI Sandbox): Real enterprise isolation. Spins up secure, 
+ *    isolated workspaces remotely or locally via Daytona SDK/CLI. Requires active 
+ *    DAYTONA_SERVER_URL and DAYTONA_API_KEY.
+ * 
+ * 2. Tier 2 (Local Docker Sandbox Fallback): Standard local container isolation. If Daytona 
+ *    credentials are unset or connection fails, the system spawns an ephemeral 
+ *    docker-compose container stack in a throwaway folder to reproduce and test code safely.
+ * 
+ * 3. Tier 3 (Simulated Sandbox Fallback): Dev-time fallback. If neither Daytona nor a running 
+ *    local Docker daemon is available (e.g. in permission-restricted environments or non-admin 
+ *    CLI contexts), the system falls back to a mock file-patch inspector that emulates compile 
+ *    passes and crash script results. Used as a last-resort to ensure the orchestrator runs safely.
+ */
+
 const localSandboxes = new Map();
 
 function isDaytonaEnabled() {
