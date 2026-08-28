@@ -3,12 +3,13 @@ const path = require('path');
 
 function parseSkillFile(filePath) {
   const fileContent = fs.readFileSync(filePath, 'utf8');
+  const parentDirName = path.basename(path.dirname(filePath));
   
   // Look for frontmatter (--- YAML --- markdown content)
   const match = fileContent.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!match) {
     return {
-      name: path.basename(filePath, '.md'),
+      name: parentDirName,
       description: '',
       content: fileContent.trim()
     };
@@ -46,7 +47,7 @@ function parseSkillFile(filePath) {
   }
   
   return {
-    name: metadata.name || path.basename(filePath, '.md'),
+    name: metadata.name || parentDirName,
     description: metadata.description || '',
     content: content.trim()
   };
@@ -54,17 +55,20 @@ function parseSkillFile(filePath) {
 
 function loadSkillPacks(repoName) {
   const skillsDir = __dirname;
-  const files = fs.readdirSync(skillsDir);
-  const skillFiles = files.filter(f => f.endsWith('.md'));
+  const items = fs.readdirSync(skillsDir, { withFileTypes: true });
   
   const skills = [];
-  for (const file of skillFiles) {
-    const filePath = path.join(skillsDir, file);
-    try {
-      const parsed = parseSkillFile(filePath);
-      skills.push(parsed);
-    } catch (err) {
-      console.error(`Error parsing skill file ${file}:`, err.message);
+  for (const item of items) {
+    if (item.isDirectory()) {
+      const skillFilePath = path.join(skillsDir, item.name, 'SKILL.md');
+      if (fs.existsSync(skillFilePath)) {
+        try {
+          const parsed = parseSkillFile(skillFilePath);
+          skills.push(parsed);
+        } catch (err) {
+          console.error(`Error parsing skill file ${item.name}/SKILL.md:`, err.message);
+        }
+      }
     }
   }
   return skills;
