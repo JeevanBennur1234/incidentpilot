@@ -22,14 +22,14 @@ function fetchServiceLogs(serviceName, sinceMinutes = 5) {
     throw new Error("Invalid serviceName: Only alphanumeric, hyphen, and underscore characters are allowed.");
   }
 
-  const parsedSinceMinutes = Number(sinceMinutes);
-  if (isNaN(parsedSinceMinutes) || parsedSinceMinutes <= 0 || !isFinite(parsedSinceMinutes)) {
+  // Ensure sinceMinutes is strictly a number type (prevents coercion from boolean/strings/arrays)
+  if (typeof sinceMinutes !== 'number' || isNaN(sinceMinutes) || sinceMinutes <= 0 || !isFinite(sinceMinutes)) {
     throw new Error("Invalid sinceMinutes: Must be a positive finite number.");
   }
 
   let logLines = [];
   try {
-    const timeStr = `${parsedSinceMinutes}m`;
+    const timeStr = `${sinceMinutes}m`;
     const rawLogs = execSync(`docker logs ${serviceName} --since ${timeStr}`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
     const lines = rawLogs.split('\n').filter(l => l.trim().length > 0);
     for (const line of lines) {
@@ -40,9 +40,14 @@ function fetchServiceLogs(serviceName, sinceMinutes = 5) {
       }
     }
   } catch (err) {
-    // Mock / Fallback logs if docker logs is unavailable or fails
+    // Propagate the actual error if the queried service is not the demo 'order-service'
+    if (serviceName !== 'order-service') {
+      throw new Error(`Failed to fetch Docker logs for service '${serviceName}': ${err.message}`);
+    }
+
+    // Mock / Fallback logs if docker logs is unavailable or fails for order-service demo
     logLines = [
-      { level: "INFO", time: new Date(Date.now() - 60000).toISOString(), event: "server_started", port: 3000, msg: `${serviceName} running on port 3000` },
+      { level: "INFO", time: new Date(Date.now() - 60000).toISOString(), event: "server_started", port: 3000, msg: "order-service running on port 3000" },
       { level: "INFO", time: new Date(Date.now() - 50000).toISOString(), event: "pool_connect", msg: "Database client connected to pool" },
       { level: "INFO", time: new Date(Date.now() - 40000).toISOString(), event: "order_request_received", body: {}, msg: "Received order creation request" },
       { level: "INFO", time: new Date(Date.now() - 40000).toISOString(), event: "pool_acquire_start", msg: "Acquiring database connection from pool" },

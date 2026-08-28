@@ -75,11 +75,21 @@ describe('Logs and Metrics MCP Connector Unit Tests', () => {
       expect(() => fetchServiceLogs("order$service")).toThrow("Invalid serviceName: Only alphanumeric, hyphen, and underscore characters are allowed.");
     });
 
-    it('should throw error if sinceMinutes is invalid', () => {
+    it('should throw error if sinceMinutes is invalid or coerced (non-number type)', () => {
       expect(() => fetchServiceLogs("order-service", -5)).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
       expect(() => fetchServiceLogs("order-service", NaN)).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
       expect(() => fetchServiceLogs("order-service", Infinity)).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
       expect(() => fetchServiceLogs("order-service", "abc")).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
+      expect(() => fetchServiceLogs("order-service", "5")).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
+      expect(() => fetchServiceLogs("order-service", true)).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
+      expect(() => fetchServiceLogs("order-service", [5])).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
+    });
+
+    it('should throw error when docker fails for a service other than order-service', () => {
+      child_process.execSync.mockImplementation(() => {
+        throw new Error('Docker offline');
+      });
+      expect(() => fetchServiceLogs("another-service")).toThrow("Failed to fetch Docker logs for service 'another-service': Docker offline");
     });
 
     it('should throw error in tools/call handler if args are missing', async () => {
