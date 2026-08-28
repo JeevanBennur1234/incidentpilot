@@ -112,7 +112,10 @@ When you trigger the pool-exhaustion alert:
 
 | PR # | Qodo Review Status | Issues Flagged | Issues Resolved | Merge Status |
 |------|---------------------|----------------|-----------------|--------------|
-| (TBD)| Pending Review      | None           | N/A             | Open         |
+| [#1](https://github.com/JeevanBennur1234/incidentpilot/pull/1) | Completed | 3 Bugs (Type coercion on `sinceMinutes`, mock log misattribution, Docker option injection) | Enforced strict `sinceMinutes` type-checking, restricted fallbacks to demo service, required alphanumeric prefix on `serviceName`, and migrated to `execFileSync` | Merged |
+
+* **Summary of Qodo Findings:** Qodo flagged that `sinceMinutes` accepted coerced non-number types (violating the MCP schema), mock fallback logs were incorrectly returned for non-demo services, and option-shaped service names (like `--help`) could lead to Docker command option injection.
+* **Remediation:** We implemented strict type checking for `sinceMinutes`, restricted mock fallback logs to the `order-service` demo, enforced that `serviceName` begins with an alphanumeric character, and refactored from shell execution to safe array argument execution via `execFileSync`.
 
 ---
 
