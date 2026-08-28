@@ -33,10 +33,19 @@ Checklist mapping incident response requirements to the exact files:
   * Implementation: [`agent/connectors/logs-metrics-mcp.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/connectors/logs-metrics-mcp.js) (Docker logs & metrics collector) and [`agent/connectors/github-mcp.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/connectors/github-mcp.js) (GitHub Octokit PR integration).
 - [x] **Sandboxing**: Ephemeral Docker-based sandboxes managed via Daytona CLI/SDK simulation fallback.
   * Implementation: [`agent/sandbox/daytona.js`](file:///c:/Users/bennu/Documents/7thsem/Agent-Harness/incidentpilot/agent/sandbox/daytona.js)
-  * *Sandboxing Run Mode*: **Tier 3: Simulated Sandbox fallback** was the mode actually exercised during the runs.
+  * *Sandboxing Run Mode*: **Tier 2: Local Docker Sandbox Fallback** was successfully verified.
   * *System Connectivity Evidence*:
-    * Daytona CLI: `daytona : The term 'daytona' is not recognized as the name of a cmdlet` (Uninstalled)
-    * Docker Engine Daemon: `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine... The system cannot find the file specified.` (Stopped)
+    * Docker Engine Daemon: Active and running.
+    * `docker ps` DURING execution:
+      ```
+      CONTAINER ID   IMAGE                                 NAMES                           STATUS
+      d3a31a5cc0dd   sandbox-1787888352034-order-service   service-sandbox-1787888352034   Up 4 seconds
+      d8306de82d11   postgres:15-alpine                    db-sandbox-1787888352034        Up 11 seconds (healthy)
+      ```
+    * `docker ps` AFTER teardown (showing ephemeral containers are gone):
+      ```
+      CONTAINER ID   IMAGE     NAMES     STATUS
+      ```
   * *Activating Real Isolation (Tiers 1 & 2)*:
     * To activate **Tier 1 (Real Daytona Sandboxing)**: Deploy/install the Daytona CLI and export active server/auth variables:
       ```env
