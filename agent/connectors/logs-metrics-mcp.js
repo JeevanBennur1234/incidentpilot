@@ -1,7 +1,7 @@
 const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { CallToolRequestSchema, ListToolsRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 
 const server = new Server({
   name: "logs-metrics-mcp",
@@ -17,9 +17,9 @@ function fetchServiceLogs(serviceName, sinceMinutes = 5) {
   if (typeof serviceName !== 'string' || serviceName.trim().length === 0) {
     throw new Error("Invalid serviceName: Must be a non-empty string.");
   }
-  // Sanitize service name to prevent command injection
-  if (!/^[a-zA-Z0-9_-]+$/.test(serviceName)) {
-    throw new Error("Invalid serviceName: Only alphanumeric, hyphen, and underscore characters are allowed.");
+  // Sanitize service name to prevent command injection and option injection (must begin with alphanumeric)
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(serviceName)) {
+    throw new Error("Invalid serviceName: Must start with an alphanumeric character and contain only alphanumeric, hyphen, or underscore characters.");
   }
 
   // Ensure sinceMinutes is strictly a number type (prevents coercion from boolean/strings/arrays)
@@ -30,7 +30,7 @@ function fetchServiceLogs(serviceName, sinceMinutes = 5) {
   let logLines = [];
   try {
     const timeStr = `${sinceMinutes}m`;
-    const rawLogs = execSync(`docker logs ${serviceName} --since ${timeStr}`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+    const rawLogs = execFileSync('docker', ['logs', serviceName, '--since', timeStr], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
     const lines = rawLogs.split('\n').filter(l => l.trim().length > 0);
     for (const line of lines) {
       try {
