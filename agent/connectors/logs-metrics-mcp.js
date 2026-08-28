@@ -12,12 +12,25 @@ const server = new Server({
   }
 });
 
-// Helper to get logs
+// Helper to get logs with input validation and error handling
 function fetchServiceLogs(serviceName, sinceMinutes = 5) {
+  if (typeof serviceName !== 'string' || serviceName.trim().length === 0) {
+    throw new Error("Invalid serviceName: Must be a non-empty string.");
+  }
+  // Sanitize service name to prevent command injection
+  if (!/^[a-zA-Z0-9_-]+$/.test(serviceName)) {
+    throw new Error("Invalid serviceName: Only alphanumeric, hyphen, and underscore characters are allowed.");
+  }
+
+  const parsedSinceMinutes = Number(sinceMinutes);
+  if (isNaN(parsedSinceMinutes) || parsedSinceMinutes <= 0 || !isFinite(parsedSinceMinutes)) {
+    throw new Error("Invalid sinceMinutes: Must be a positive finite number.");
+  }
+
   let logLines = [];
   try {
-    const timeStr = `${sinceMinutes}m`;
-    const rawLogs = execSync(`docker logs order-service --since ${timeStr}`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+    const timeStr = `${parsedSinceMinutes}m`;
+    const rawLogs = execSync(`docker logs ${serviceName} --since ${timeStr}`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
     const lines = rawLogs.split('\n').filter(l => l.trim().length > 0);
     for (const line of lines) {
       try {
@@ -29,7 +42,7 @@ function fetchServiceLogs(serviceName, sinceMinutes = 5) {
   } catch (err) {
     // Mock / Fallback logs if docker logs is unavailable or fails
     logLines = [
-      { level: "INFO", time: new Date(Date.now() - 60000).toISOString(), event: "server_started", port: 3000, msg: "order-service running on port 3000" },
+      { level: "INFO", time: new Date(Date.now() - 60000).toISOString(), event: "server_started", port: 3000, msg: `${serviceName} running on port 3000` },
       { level: "INFO", time: new Date(Date.now() - 50000).toISOString(), event: "pool_connect", msg: "Database client connected to pool" },
       { level: "INFO", time: new Date(Date.now() - 40000).toISOString(), event: "order_request_received", body: {}, msg: "Received order creation request" },
       { level: "INFO", time: new Date(Date.now() - 40000).toISOString(), event: "pool_acquire_start", msg: "Acquiring database connection from pool" },
@@ -78,8 +91,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
+  if (!args) {
+    throw new Error("Missing arguments for tool execution.");
+  }
+
   if (name === "get_logs") {
-    const logs = fetchServiceLogs(args.serviceName, args.sinceMinutes);
+    if (!args.serviceName) {
+      throw new Error("Missing required argument: 'serviceName'");
+    }
+    const sinceMinutes = args.sinceMinutes !== undefined ? args.sinceMinutes : 5;
+    const logs = fetchServiceLogs(args.serviceName, sinceMinutes);
     return {
       content: [
         {
@@ -91,6 +112,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   if (name === "get_metrics") {
+    if (!args.serviceName) {
+      throw new Error("Missing required argument: 'serviceName'");
+    }
     const logs = fetchServiceLogs(args.serviceName, 5);
     
     let leaks = 0;
