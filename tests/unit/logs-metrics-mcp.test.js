@@ -61,4 +61,44 @@ describe('Logs and Metrics MCP Connector Unit Tests', () => {
     expect(resultObj.activeConnections).toBe(1);
     expect(resultObj.waitingConnections).toBe(0);
   });
+
+  describe('Input Validation & Error Handling', () => {
+    it('should throw error if serviceName is missing, empty, or not a string', () => {
+      expect(() => fetchServiceLogs()).toThrow("Invalid serviceName: Must be a non-empty string.");
+      expect(() => fetchServiceLogs(null)).toThrow("Invalid serviceName: Must be a non-empty string.");
+      expect(() => fetchServiceLogs("")).toThrow("Invalid serviceName: Must be a non-empty string.");
+      expect(() => fetchServiceLogs("   ")).toThrow("Invalid serviceName: Must be a non-empty string.");
+    });
+
+    it('should throw error if serviceName contains invalid characters (injection protection)', () => {
+      expect(() => fetchServiceLogs("order-service; rm -rf /")).toThrow("Invalid serviceName: Only alphanumeric, hyphen, and underscore characters are allowed.");
+      expect(() => fetchServiceLogs("order$service")).toThrow("Invalid serviceName: Only alphanumeric, hyphen, and underscore characters are allowed.");
+    });
+
+    it('should throw error if sinceMinutes is invalid', () => {
+      expect(() => fetchServiceLogs("order-service", -5)).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
+      expect(() => fetchServiceLogs("order-service", NaN)).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
+      expect(() => fetchServiceLogs("order-service", Infinity)).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
+      expect(() => fetchServiceLogs("order-service", "abc")).toThrow("Invalid sinceMinutes: Must be a positive finite number.");
+    });
+
+    it('should throw error in tools/call handler if args are missing', async () => {
+      await expect(handler({
+        method: "tools/call",
+        params: { name: "get_logs" }
+      })).rejects.toThrow("Missing arguments for tool execution.");
+    });
+
+    it('should throw error in tools/call handler if serviceName is missing', async () => {
+      await expect(handler({
+        method: "tools/call",
+        params: { name: "get_logs", arguments: {} }
+      })).rejects.toThrow("Missing required argument: 'serviceName'");
+
+      await expect(handler({
+        method: "tools/call",
+        params: { name: "get_metrics", arguments: {} }
+      })).rejects.toThrow("Missing required argument: 'serviceName'");
+    });
+  });
 });
