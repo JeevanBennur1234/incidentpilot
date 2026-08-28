@@ -3,14 +3,115 @@ const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio
 const { CallToolRequestSchema, ListToolsRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
 const { execSync, execFileSync } = require('child_process');
 
-const server = new Server({
-  name: "logs-metrics-mcp",
-  version: "1.0.0"
-}, {
-  capabilities: {
-    tools: {}
-  }
-});
+function createLogsMetricsServer() {
+  const server = new Server({
+    name: "logs-metrics-mcp",
+    version: "1.0.0"
+  }, {
+    capabilities: {
+      tools: {}
+    }
+  });
+
+  // Define request handlers
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+      tools: [
+        {
+          name: "get_logs",
+          description: "Read service log output and return parsed JSON log entries",
+          inputSchema: {
+            type: "object",
+            properties: {
+              serviceName: { type: "string", description: "The microservice name (e.g. order-service)" },
+              sinceMinutes: { type: "number", description: "Fetch logs since this many minutes ago (default: 5)" }
+            },
+            required: ["serviceName"]
+          }
+        },
+        {
+          name: "get_metrics",
+          description: "Fetch a metrics snapshot for the service, including database pool metrics",
+          inputSchema: {
+            type: "object",
+            properties: {
+              serviceName: { type: "string", description: "The microservice name (e.g. order-service)" }
+            },
+            required: ["serviceName"]
+          }
+        }
+      ]
+    };
+  });
+
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+
+    if (!args) {
+      throw new Error("Missing arguments for tool execution.");
+    }
+
+    if (name === "get_logs") {
+      if (!args.serviceName) {
+        throw new Error("Missing required argument: 'serviceName'");
+      }
+      const sinceMinutes = args.sinceMinutes !== undefined ? args.sinceMinutes : 5;
+      const logs = fetchServiceLogs(args.serviceName, sinceMinutes);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(logs, null, 2)
+          }
+        ]
+      };
+    }
+
+    if (name === "get_metrics") {
+      if (!args.serviceName) {
+        throw new Error("Missing required argument: 'serviceName'");
+      }
+      const logs = fetchServiceLogs(args.serviceName, 5);
+      
+      let leaks = 0;
+      let totalRequests = 0;
+      let errorRequests = 0;
+      for (const log of logs) {
+        if (log.event === 'connection_leak') leaks++;
+        if (log.event === 'order_request_received') totalRequests++;
+        if (log.event === 'order_request_error') errorRequests++;
+      }
+
+      const activeConnections = Math.min(5, leaks);
+      const idleConnections = 5 - activeConnections;
+      const errorRate = totalRequests > 0 ? (errorRequests / totalRequests) * 100 : 0;
+
+      const metrics = {
+        poolSize: 5,
+        activeConnections,
+        idleConnections,
+        waitingConnections: activeConnections >= 5 ? 1 : 0,
+        requestLatencyP99Ms: activeConnections >= 5 ? 2000 : 250,
+        errorRatePercent: parseFloat(errorRate.toFixed(2)) || 20.0
+      };
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(metrics, null, 2)
+          }
+        ]
+      };
+    }
+
+    throw new Error(`Tool not found: ${name}`);
+  });
+
+  return server;
+}
+
+const server = createLogsMetricsServer();
 
 // Helper to get logs with input validation and error handling
 function fetchServiceLogs(serviceName, sinceMinutes = 5) {
@@ -62,101 +163,6 @@ function fetchServiceLogs(serviceName, sinceMinutes = 5) {
   return logLines;
 }
 
-// Define request handlers
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: "get_logs",
-        description: "Read service log output and return parsed JSON log entries",
-        inputSchema: {
-          type: "object",
-          properties: {
-            serviceName: { type: "string", description: "The microservice name (e.g. order-service)" },
-            sinceMinutes: { type: "number", description: "Fetch logs since this many minutes ago (default: 5)" }
-          },
-          required: ["serviceName"]
-        }
-      },
-      {
-        name: "get_metrics",
-        description: "Fetch a metrics snapshot for the service, including database pool metrics",
-        inputSchema: {
-          type: "object",
-          properties: {
-            serviceName: { type: "string", description: "The microservice name (e.g. order-service)" }
-          },
-          required: ["serviceName"]
-        }
-      }
-    ]
-  };
-});
-
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-
-  if (!args) {
-    throw new Error("Missing arguments for tool execution.");
-  }
-
-  if (name === "get_logs") {
-    if (!args.serviceName) {
-      throw new Error("Missing required argument: 'serviceName'");
-    }
-    const sinceMinutes = args.sinceMinutes !== undefined ? args.sinceMinutes : 5;
-    const logs = fetchServiceLogs(args.serviceName, sinceMinutes);
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(logs, null, 2)
-        }
-      ]
-    };
-  }
-
-  if (name === "get_metrics") {
-    if (!args.serviceName) {
-      throw new Error("Missing required argument: 'serviceName'");
-    }
-    const logs = fetchServiceLogs(args.serviceName, 5);
-    
-    let leaks = 0;
-    let totalRequests = 0;
-    let errorRequests = 0;
-    for (const log of logs) {
-      if (log.event === 'connection_leak') leaks++;
-      if (log.event === 'order_request_received') totalRequests++;
-      if (log.event === 'order_request_error') errorRequests++;
-    }
-
-    const activeConnections = Math.min(5, leaks);
-    const idleConnections = 5 - activeConnections;
-    const errorRate = totalRequests > 0 ? (errorRequests / totalRequests) * 100 : 0;
-
-    const metrics = {
-      poolSize: 5,
-      activeConnections,
-      idleConnections,
-      waitingConnections: activeConnections >= 5 ? 1 : 0,
-      requestLatencyP99Ms: activeConnections >= 5 ? 2000 : 250,
-      errorRatePercent: parseFloat(errorRate.toFixed(2)) || 20.0
-    };
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(metrics, null, 2)
-        }
-      ]
-    };
-  }
-
-  throw new Error(`Tool not found: ${name}`);
-});
-
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
@@ -170,4 +176,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, fetchServiceLogs };
+module.exports = { server, fetchServiceLogs, createLogsMetricsServer };
