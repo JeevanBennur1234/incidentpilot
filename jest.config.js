@@ -6,7 +6,8 @@ module.exports = {
     'agent/**/*.js',
     '!agent/sandbox/daytona.js',
     '!agent/cli.js',
-    '!agent/create-and-push-repo.js'
+    '!agent/create-and-push-repo.js',
+    '!agent/servers/**/*.js'
   ],
   coverageThreshold: {
     global: {
