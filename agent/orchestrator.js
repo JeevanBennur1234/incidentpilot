@@ -237,7 +237,7 @@ async function applyAndVerify(approvedPatch) {
   try {
     await client.connect(transport);
     
-    const repoPath = "JeevanBennur1234/devops_lab";
+    const repoPath = "Shashidhar-Pawadashetti/incidentpilot";
     const branchName = `fix/db-connection-leak-${Date.now()}`;
     const baseBranch = "main";
     
@@ -247,10 +247,11 @@ async function applyAndVerify(approvedPatch) {
       arguments: { repoPath, branchName, baseBranch }
     });
 
-    console.log(`[GITHUB] Committing patch changes to ${approvedPatch.patchedFile}...`);
+    const patchedFileName = approvedPatch.patchedFile || 'server.js';
+    console.log(`[GITHUB] Committing patch changes to ${patchedFileName}...`);
     let newContent = '';
     const sandboxDir = path.resolve(__dirname, '../db/sandboxes', approvedPatch.sandboxId || '');
-    const serverPath = path.join(sandboxDir, approvedPatch.patchedFile || 'server.js');
+    const serverPath = path.join(sandboxDir, patchedFileName);
     if (fs.existsSync(serverPath)) {
       newContent = fs.readFileSync(serverPath, 'utf8');
     } else {
@@ -262,7 +263,7 @@ async function applyAndVerify(approvedPatch) {
       arguments: {
         repoPath,
         branchName,
-        filePath: `demo-service/${approvedPatch.patchedFile}`,
+        filePath: `demo-service/${patchedFileName}`,
         newContent,
         commitMessage: "fix: release postgres connection client on validation errors"
       }
@@ -276,20 +277,27 @@ async function applyAndVerify(approvedPatch) {
         branchName,
         baseBranch,
         title: "Fix database connection leak in order-service",
-        body: `### IncidentPilot Automated Hotfix
-This PR resolves the Postgres database client pool exhaustion by correctly releasing connections in try/finally blocks during validation errors.
-Triage reasoning: ${approvedPatch.reasoning}`
+        body: `### IncidentPilot Automated Hotfix\nThis PR resolves the Postgres database client pool exhaustion by correctly releasing connections in try/finally blocks during validation errors.\nTriage reasoning: ${approvedPatch.reasoning || 'N/A'}`
       }
     });
 
-    const prInfo = JSON.parse(prResult.content[0].text);
-    console.log(`[GITHUB] Pull Request opened successfully! PR URL: ${prInfo.prUrl || prInfo.url}`);
+    let prInfo = {};
+    try {
+      if (prResult.isError) {
+        throw new Error(prResult.content[0].text);
+      }
+      prInfo = JSON.parse(prResult.content[0].text);
+    } catch (e) {
+      console.error(`[GITHUB] Error parsing PR response or failed to create PR: ${e.message}`);
+      throw new Error(`GitHub MCP Error: ${e.message}`);
+    }
+    console.log(`[GITHUB] Pull Request opened successfully! PR URL: ${prInfo.htmlUrl || prInfo.prUrl || prInfo.url}`);
     
     const result = {
       status: "applied_and_verified",
       branchName,
-      prUrl: prInfo.prUrl || prInfo.url,
-      prNumber: prInfo.number
+      prUrl: prInfo.htmlUrl || prInfo.prUrl || prInfo.url,
+      prNumber: prInfo.prNumber || prInfo.number
     };
     await persistSessionState('session-test-uuid-12345', { stage: 'PR opened', payload: result });
     return result;

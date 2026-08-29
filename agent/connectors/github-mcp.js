@@ -2,6 +2,7 @@ const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { CallToolRequestSchema, ListToolsRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
 const { Octokit } = require('@octokit/rest');
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 
 function createGithubServer() {
   const server = new Server({
