@@ -5,3 +5,4 @@ db/*.db-journal
 postmortems/
 .env
 .DS_Store
+db/sandboxes/
