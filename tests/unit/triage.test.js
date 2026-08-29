@@ -28,4 +28,9 @@ describe('Triage Subagent Unit Tests', () => {
     expect(hypothesis.suspectedFile).toBe('src/orders.js');
     expect(hypothesis.evidence.length).toBeGreaterThan(0);
   });
+
+  it('should classify memory-leak', async () => {
+    const hypothesis = await triage.runTriageSubagent({ logs: [{ message: "out of memory" }] }, '');
+    expect(hypothesis.category).toBe('memory-leak');
+  });
 });
